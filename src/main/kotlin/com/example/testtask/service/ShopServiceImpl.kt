@@ -2,22 +2,81 @@ package com.example.testtask.service
 
 import com.example.testtask.controller.CalculatePriceDto
 import com.example.testtask.controller.PurchaseDto
+import com.example.testtask.entity.Coupon
 import com.example.testtask.entity.Product
+import com.example.testtask.repository.ICouponRepository
+import com.example.testtask.repository.IProductRepository
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.lang.Exception
+import java.util.*
 
 @Service
 class ShopServiceImpl(
-    // productRepository: ProductRepository,
     // couponRepository: CouponRepository
 ) : IShopService {
+
+    @Autowired
+    private lateinit var productRepository: IProductRepository
+
+    @Autowired
+    private lateinit var couponRepository: ICouponRepository
+
     override fun calculatePrice(dto: CalculatePriceDto): UInt {
         println("" + dto.product + dto.couponCode + dto.taxNumber);
 
-        println(taxCalc(dto.taxNumber))
+        var price = findPriceProductById(dto.product.toInt())
+        var priceWithDiscount = calcPriceWithDiscount(price, dto.couponCode)
+
+        var tax = taxCalc(dto.taxNumber)
+        println("цена продукта №${dto.product}: " + price)
+        println("цена продукта со скидкой №${dto.product}: " + priceWithDiscount)
+        println("налог по стране:" + tax)
+
+        var itog: Double = priceWithDiscount + priceWithDiscount * tax
+
+        println("итого=${priceWithDiscount}+${priceWithDiscount}*${tax} = " + itog)
         return (2 + 2).toUInt()
     }
 
+
+    fun calcPriceWithDiscount(price: Double, couponName: String): Double {
+        if (findCouponByName(couponName)) {
+
+            var prefix = couponName.get(0).toString()
+            var discountNumber: String = ""
+            for (i in 1..couponName.length - 1) {
+                discountNumber = discountNumber.plus(couponName[i])
+            }
+            println("число в скидке=$discountNumber")
+
+            var discount: Int = discountNumber.toInt()
+
+
+            when (prefix) {
+                "P" -> {
+                    println("Процентная скидка")
+                    discount = discount / 100
+                    return price * discount
+                }
+
+                "D" -> {
+                    println("Вещественная скидка")
+                    var itog = price - discount
+                    if (itog < 0) return 0.0
+                    else
+                        return itog
+                }
+
+                else -> {
+                    println("Нет такого купона")
+                    throw (Exception("Нет такого купона"))
+                }
+            }
+        }
+
+    return price
+    }
 
     fun taxCalc(taxCode: String): Double {
         var code: String = taxCode.get(0).toString() + taxCode.get(1).toString()
@@ -60,20 +119,25 @@ class ShopServiceImpl(
      * (100 евро - 6% скидка + налог 24%)
      * */
     fun findPriceProductByName(name: String): Double {
-        TODO()
-        return 2.5
+        var price = productRepository.findByName(name)?.price ?: -1.0
+        return price
     }
+
+    fun findPriceProductById(id: Int): Double {
+        var price = productRepository.findById(id)?.get()?.price ?: -1.0
+        return price
+    }
+
 
     /**
      * Найти купон в базе
      * вернуть true если есть
      * false если нет
      * */
-    fun findCouponByName(couponName: String): Boolean {
-        TODO()
-        return true
+    fun findCouponByName(name: String): Boolean {
+        var discount = couponRepository.findByName(name)
+        return discount != null
     }
-
 
     override fun purchase(dto: PurchaseDto): String {
         println("" + dto.product + dto.couponCode + dto.taxNumber + dto.paymentProcessor);
