@@ -8,5 +8,7 @@ class Coupon (
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long =0,
+
+    @Column(name = "code")
     var name: String,
     )
