@@ -1,7 +1,9 @@
 package com.example.testtask.controller
 
 import com.example.testtask.service.IShopService
+import jakarta.validation.Valid
 import org.apache.catalina.connector.Response
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -21,7 +23,7 @@ class ShopController(private val shopService: IShopService) {
         //    }
         // => iphone, germany, 15% discount
         @PostMapping("/calculate-price")
-        fun calculatePrice(@RequestBody dto: CalculatePriceDto): UInt {
+        fun calculatePrice(@Validated @RequestBody dto: CalculatePriceDto): Double {
             return shopService.calculatePrice(dto = dto)
         }
 

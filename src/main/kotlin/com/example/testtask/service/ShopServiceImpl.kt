@@ -23,7 +23,7 @@ class ShopServiceImpl(
     @Autowired
     private lateinit var couponRepository: ICouponRepository
 
-    override fun calculatePrice(dto: CalculatePriceDto): UInt {
+    override fun calculatePrice(dto: CalculatePriceDto): Double {
         println("" + dto.product + dto.couponCode + dto.taxNumber);
 
         var price = findPriceProductById(dto.product.toInt())
@@ -37,7 +37,7 @@ class ShopServiceImpl(
         var itog: Double = priceWithDiscount + priceWithDiscount * tax
 
         println("итого=${priceWithDiscount}+${priceWithDiscount}*${tax} = " + itog)
-        return (2 + 2).toUInt()
+        return itog
     }
 
 
@@ -51,14 +51,16 @@ class ShopServiceImpl(
             }
             println("число в скидке=$discountNumber")
 
-            var discount: Int = discountNumber.toInt()
+            var discount: Double = discountNumber.toInt().toDouble()
 
 
             when (prefix) {
                 "P" -> {
                     println("Процентная скидка")
                     discount = discount / 100
-                    return price * discount
+
+                    println("$price -$price * $discount ="+(price-price*discount))
+                    return price-price * discount
                 }
 
                 "D" -> {
