@@ -8,6 +8,7 @@ import com.example.testtask.repository.ICouponRepository
 import com.example.testtask.repository.IProductRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import com.example.testtask.exception.CouponNotFoundException
 import java.lang.Exception
 import java.util.*
 
@@ -73,7 +74,7 @@ class ShopServiceImpl(
                     throw (Exception("Нет такого купона"))
                 }
             }
-        }
+        } else throw CouponNotFoundException(couponName)
 
     return price
     }
@@ -136,7 +137,8 @@ class ShopServiceImpl(
      * */
     fun findCouponByName(name: String): Boolean {
         var discount = couponRepository.findByName(name)
-        return discount != null
+        if (discount != null) return true
+        else throw CouponNotFoundException(name)//throw(Exception("Купона $name не существует"))
     }
 
     override fun purchase(dto: PurchaseDto): String {
