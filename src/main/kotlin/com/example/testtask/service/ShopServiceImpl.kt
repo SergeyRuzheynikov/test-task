@@ -2,13 +2,12 @@ package com.example.testtask.service
 
 import com.example.testtask.controller.CalculatePriceDto
 import com.example.testtask.controller.PurchaseDto
-import com.example.testtask.entity.Coupon
-import com.example.testtask.entity.Product
 import com.example.testtask.repository.ICouponRepository
 import com.example.testtask.repository.IProductRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import com.example.testtask.exception.CouponNotFoundException
+import com.example.testtask.payprocessor.*
 import java.lang.Exception
 import java.util.*
 
@@ -23,7 +22,7 @@ class ShopServiceImpl(
     @Autowired
     private lateinit var couponRepository: ICouponRepository
 
-    override fun calculatePrice(dto: CalculatePriceDto): Double {
+    override fun calculatePrice(dto: CalculatePriceDto): Float {
         println("" + dto.product + dto.couponCode + dto.taxNumber);
 
         var price = findPriceProductById(dto.product.toInt())
@@ -34,7 +33,7 @@ class ShopServiceImpl(
         println("цена продукта со скидкой №${dto.product}: " + priceWithDiscount)
         println("налог по стране:" + tax)
 
-        var itog: Double = priceWithDiscount + priceWithDiscount * tax
+        var itog: Float = (priceWithDiscount + priceWithDiscount * tax).toFloat()
 
         println("итого=${priceWithDiscount}+${priceWithDiscount}*${tax} = " + itog)
         return itog
@@ -59,8 +58,8 @@ class ShopServiceImpl(
                     println("Процентная скидка")
                     discount = discount / 100
 
-                    println("$price -$price * $discount ="+(price-price*discount))
-                    return price-price * discount
+                    println("$price -$price * $discount =" + (price - price * discount))
+                    return price - price * discount
                 }
 
                 "D" -> {
@@ -78,7 +77,7 @@ class ShopServiceImpl(
             }
         } else throw CouponNotFoundException(couponName)
 
-    return price
+        return price
     }
 
     fun taxCalc(taxCode: String): Double {
@@ -145,7 +144,37 @@ class ShopServiceImpl(
 
     override fun purchase(dto: PurchaseDto): String {
         println("" + dto.product + dto.couponCode + dto.taxNumber + dto.paymentProcessor);
-        return "maybe purchase"
+        /**
+         * Вычисляем итоговую сумму
+         * */
+        var dtoCalc: CalculatePriceDto = CalculatePriceDto(dto.product, dto.taxNumber, dto.couponCode)
+        var price = this.calculatePrice(dtoCalc)
+        var result: Any? = null
+
+        when (dto.paymentProcessor) {
+            "paypal" -> {
+                println("оплата через paypal")
+                var paypalProocessor = PaypalProcessor()
+                var pp: IPaymentProcessor = PayPalAdapter(paypalProocessor)
+                var priceInt=price.toInt()
+                result = pp.doPay(priceInt)
+                println(result)
+
+            }
+
+            "stripePayment" -> {
+                println("оплата через stripe")
+                var stripePaymentProcessor = StripePaymentProcessor()
+                var sp: IPaymentProcessor = StripePaymentAdapter(stripePaymentProcessor)
+                sp.doPay(price)
+                result = sp.doPay(price)
+                println(result)
+            }
+
+        }
+
+
+        return "purchase: ${result.toString()}"
     }
 
 

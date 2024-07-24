@@ -5,7 +5,7 @@ import com.example.testtask.controller.PurchaseDto
 
 interface IShopService {
 
-    fun calculatePrice(dto: CalculatePriceDto): Double
+    fun calculatePrice(dto: CalculatePriceDto): Float
 
     fun purchase(dto: PurchaseDto):String
 

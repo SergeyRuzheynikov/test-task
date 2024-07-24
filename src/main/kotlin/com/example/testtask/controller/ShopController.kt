@@ -23,7 +23,7 @@ class ShopController(private val shopService: IShopService) {
         //    }
         // => iphone, germany, 15% discount
         @PostMapping("/calculate-price")
-        fun calculatePrice(@Validated @RequestBody dto: CalculatePriceDto): Double {
+        fun calculatePrice(@Validated @RequestBody dto: CalculatePriceDto): Float {
             return shopService.calculatePrice(dto = dto)
         }
 
